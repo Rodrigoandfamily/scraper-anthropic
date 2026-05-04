@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Copier · For Your Bot</title>
+    <title>JSON Tool for Bot Agent</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -32,6 +32,10 @@
             font-size: 0.8rem;
             margin: 1rem 0;
         }
+        textarea:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
         button {
             background: #8b5cf6;
             border: none;
@@ -41,8 +45,13 @@
             font-weight: bold;
             cursor: pointer;
             width: 100%;
+            margin-bottom: 0.5rem;
         }
         button:hover { background: #7c3aed; }
+        button.secondary {
+            background: #3f3f46;
+        }
+        button.secondary:hover { background: #52525b; }
         pre {
             background: #0c0c0e;
             border: 1px solid #27272a;
@@ -50,42 +59,102 @@
             padding: 1rem;
             font-size: 0.75rem;
             white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
         }
         .success { color: #4ade80; margin-top: 0.5rem; }
-        .small { font-size: 0.7rem; color: #71717a; margin-top: 0.5rem; }
+        .error { color: #f87171; margin-top: 0.5rem; }
+        .info { color: #a78bfa; margin-top: 0.5rem; }
+        .small { font-size: 0.7rem; color: #71717a; }
+        .example {
+            background: #1f1f24;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            color: #a78bfa;
+            cursor: pointer;
+            display: inline-block;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .example:hover { background: #2f2f34; }
+        .flex { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="card">
-        <h1>📋 JSON for Your Bot Agent</h1>
-        <p style="color: #a1a1aa; margin-bottom: 1rem;">Paste JSON → Copy → Give to your bot</p>
+        <h1>📋 Bot Agent JSON Tool</h1>
+        <div class="small" style="margin-bottom: 1rem;">Paste JSON from Claude → Copy to your bot</div>
         
-        <label>1️⃣ Ask Claude for a company:</label>
-        <div style="background: #1f1f24; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-            <code style="color: #a78bfa;">"Research [COMPANY NAME] and give me JSON for my bot"</code>
+        <div class="flex">
+            <button id="pasteExampleBtn" class="secondary">📝 Paste Example JSON</button>
+            <button id="clearBtn" class="secondary">🗑️ Clear All</button>
         </div>
         
-        <label>2️⃣ Paste the JSON here:</label>
-        <textarea id="jsonInput" rows="6" placeholder='{"business_name": "Example", "email": "example@email.com"}'></textarea>
+        <label>📋 Step 1: Paste JSON here (from Claude)</label>
+        <textarea id="jsonInput" rows="6" placeholder='Paste the JSON that Claude gives you here...'></textarea>
         
-        <button id="copyBtn">📋 Copy JSON to Clipboard</button>
-        <div id="status" class="small" style="margin-top: 0.5rem;"></div>
+        <button id="copyBtn">📋 Step 2: Copy JSON to Clipboard</button>
+        
+        <div id="status" class="info"></div>
     </div>
     
     <div class="card">
-        <label>✅ Formatted JSON (ready for your bot):</label>
+        <label>✅ Step 3: This is what your bot gets:</label>
         <pre id="output">Waiting for JSON...</pre>
+        <div class="small" style="margin-top: 0.5rem;">Click "Copy" above, then paste into your bot agent.</div>
     </div>
 </div>
 
 <script>
     const jsonInput = document.getElementById('jsonInput');
     const copyBtn = document.getElementById('copyBtn');
+    const pasteExampleBtn = document.getElementById('pasteExampleBtn');
+    const clearBtn = document.getElementById('clearBtn');
     const outputPre = document.getElementById('output');
     const statusDiv = document.getElementById('status');
     
-    jsonInput.addEventListener('input', function() {
+    // Example JSON for Monkey Adventures
+    const exampleJSON = `{
+  "business_name": "Monkey Adventures Tanzania",
+  "website": "monkey.travel",
+  "email": "info@monkeyadventures.com",
+  "phone": "+255 782 476 591",
+  "address": "Arusha, Tanzania",
+  "services": [
+    "Safari tours",
+    "Kilimanjaro trekking",
+    "Zanzibar beach holidays"
+  ],
+  "pricing": {
+    "3_day_safari": "$870 per person",
+    "5_day_safari": "$950 per person",
+    "kilimanjaro_6_day": "$1,150 per person"
+  },
+  "hours": "24/7 customer support",
+  "years_in_business": "Since 2015"
+}`;
+    
+    // Paste example
+    pasteExampleBtn.onclick = () => {
+        jsonInput.value = exampleJSON;
+        formatAndDisplay();
+        statusDiv.innerHTML = '✅ Example JSON loaded! Click "Copy" to use in your bot.';
+        statusDiv.className = 'success';
+    };
+    
+    // Clear all
+    clearBtn.onclick = () => {
+        jsonInput.value = '';
+        outputPre.innerText = 'Waiting for JSON...';
+        statusDiv.innerHTML = 'Cleared. Paste your JSON here.';
+        statusDiv.className = 'info';
+    };
+    
+    // Format and display JSON
+    function formatAndDisplay() {
         let text = jsonInput.value.trim();
         if (text) {
             try {
@@ -93,31 +162,39 @@
                 const formatted = JSON.stringify(parsed, null, 2);
                 outputPre.innerText = formatted;
                 statusDiv.innerHTML = '✅ Valid JSON! Ready to copy.';
-                statusDiv.style.color = '#4ade80';
+                statusDiv.className = 'success';
             } catch(e) {
                 outputPre.innerText = text;
-                statusDiv.innerHTML = '⚠️ Not valid JSON, but will copy as is.';
-                statusDiv.style.color = '#f87171';
+                statusDiv.innerHTML = '⚠️ Not valid JSON, but will copy as text.';
+                statusDiv.className = 'error';
             }
         } else {
             outputPre.innerText = 'Waiting for JSON...';
-            statusDiv.innerHTML = '';
+            statusDiv.innerHTML = 'Paste JSON from Claude above...';
+            statusDiv.className = 'info';
         }
-    });
+    }
     
+    // Live update when typing/pasting
+    jsonInput.addEventListener('input', formatAndDisplay);
+    
+    // Copy button
     copyBtn.onclick = async () => {
         const text = outputPre.innerText;
         if (text && text !== 'Waiting for JSON...') {
             await navigator.clipboard.writeText(text);
-            copyBtn.innerHTML = '✅ Copied!';
-            statusDiv.innerHTML = '✅ JSON copied! Paste into your bot agent.';
-            statusDiv.style.color = '#4ade80';
-            setTimeout(() => copyBtn.innerHTML = '📋 Copy JSON to Clipboard', 2000);
+            copyBtn.innerHTML = '✅ Copied! Paste into your bot now.';
+            statusDiv.innerHTML = '✅ JSON copied! Go paste into your bot agent.';
+            statusDiv.className = 'success';
+            setTimeout(() => copyBtn.innerHTML = '📋 Step 2: Copy JSON to Clipboard', 3000);
         } else {
-            statusDiv.innerHTML = '❌ Paste some JSON first.';
-            statusDiv.style.color = '#f87171';
+            statusDiv.innerHTML = '❌ Nothing to copy. First paste some JSON above.';
+            statusDiv.className = 'error';
         }
     };
+    
+    // Instructions
+    statusDiv.innerHTML = '💡 Click "Paste Example JSON" to see how it works, or paste your own JSON from Claude.';
 </script>
 </body>
 </html>
