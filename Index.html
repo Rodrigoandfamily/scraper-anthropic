@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company JSON · For Your Bot Agent</title>
+    <title>JSON Copier · For Your Bot</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0a0a0f;
             color: #e4e4e7;
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: system-ui, sans-serif;
             padding: 1rem;
         }
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 800px; margin: 0 auto; }
         .card {
             background: #111114;
             border: 1px solid #27272a;
@@ -20,22 +20,7 @@
             padding: 1.5rem;
             margin-bottom: 1rem;
         }
-        h1 {
-            font-size: 1.75rem;
-            margin-bottom: 0.25rem;
-            background: linear-gradient(135deg, #fff, #a78bfa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .sub { color: #a1a1aa; margin-bottom: 1.5rem; font-size: 0.875rem; }
-        label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: #a1a1aa;
-        }
+        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
         textarea {
             width: 100%;
             background: #1f1f24;
@@ -43,144 +28,96 @@
             border-radius: 0.5rem;
             padding: 0.75rem;
             color: white;
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
             font-family: monospace;
+            font-size: 0.8rem;
+            margin: 1rem 0;
         }
         button {
             background: #8b5cf6;
             border: none;
             border-radius: 0.5rem;
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem;
             color: white;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            font-size: 1rem;
         }
         button:hover { background: #7c3aed; }
-        button.secondary {
-            background: #3f3f46;
-            width: auto;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.8rem;
-        }
         pre {
             background: #0c0c0e;
             border: 1px solid #27272a;
             border-radius: 0.5rem;
             padding: 1rem;
-            overflow-x: auto;
             font-size: 0.75rem;
             white-space: pre-wrap;
-            font-family: monospace;
-            max-height: 400px;
-            overflow-y: auto;
         }
-        .flex { display: flex; gap: 0.5rem; justify-content: flex-end; margin-bottom: 0.5rem; }
-        .success { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; color: #4ade80; padding: 0.75rem; border-radius: 0.5rem; margin: 1rem 0; }
+        .success { color: #4ade80; margin-top: 0.5rem; }
         .small { font-size: 0.7rem; color: #71717a; margin-top: 0.5rem; }
-        .example {
-            background: #1f1f24;
-            border-radius: 0.25rem;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.7rem;
-            color: #a78bfa;
-            cursor: pointer;
-            display: inline-block;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .example:hover { background: #2f2f34; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="card">
-        <h1>📦 Company JSON Tool</h1>
-        <div class="sub">Paste JSON from Claude → Copy to your bot agent</div>
+        <h1>📋 JSON for Your Bot Agent</h1>
+        <p style="color: #a1a1aa; margin-bottom: 1rem;">Paste JSON → Copy → Give to your bot</p>
         
-        <label>🏢 Company Name (to research in Claude)</label>
-        <input type="text" id="companyName" placeholder="Example: Monkey Adventures Tanzania" style="width:100%; background:#1f1f24; border:1px solid #3f3f46; border-radius:0.5rem; padding:0.75rem; color:white; margin-bottom:1rem;">
-        
-        <div style="margin-bottom: 1rem;">
-            <span style="font-size: 0.7rem; color: #71717a;">Quick ask Claude:</span>
-            <span class="example" onclick="setCompany('Monkey Adventures Tanzania')">🐒 Monkey Adventures</span>
-            <span class="example" onclick="setCompany('Stripe')">💳 Stripe</span>
-            <span class="example" onclick="setCompany('Tesla')">🚗 Tesla</span>
-            <span class="example" onclick="setCompany('Airbnb')">🏠 Airbnb</span>
+        <label>1️⃣ Ask Claude for a company:</label>
+        <div style="background: #1f1f24; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+            <code style="color: #a78bfa;">"Research [COMPANY NAME] and give me JSON for my bot"</code>
         </div>
         
-        <label>📋 Paste JSON from Claude here</label>
-        <textarea id="jsonInput" rows="8" placeholder='Paste the JSON that Claude gives you here...'></textarea>
+        <label>2️⃣ Paste the JSON here:</label>
+        <textarea id="jsonInput" rows="6" placeholder='{"business_name": "Example", "email": "example@email.com"}'></textarea>
         
         <button id="copyBtn">📋 Copy JSON to Clipboard</button>
-        
-        <div id="status" class="small" style="margin-top: 1rem;"></div>
+        <div id="status" class="small" style="margin-top: 0.5rem;"></div>
     </div>
     
     <div class="card">
-        <label>🤖 For Your Bot Agent - Copy This</label>
-        <pre id="output">{
-  "status": "waiting",
-  "message": "Ask Claude for a company JSON, then paste it above"
-}</pre>
+        <label>✅ Formatted JSON (ready for your bot):</label>
+        <pre id="output">Waiting for JSON...</pre>
     </div>
 </div>
 
 <script>
-    const companyNameInput = document.getElementById('companyName');
     const jsonInput = document.getElementById('jsonInput');
     const copyBtn = document.getElementById('copyBtn');
     const outputPre = document.getElementById('output');
     const statusDiv = document.getElementById('status');
     
-    function setCompany(name) {
-        companyNameInput.value = name;
-        statusDiv.innerHTML = `✅ Now ask Claude: "Research ${name} and give me JSON for my bot agent"`;
-        statusDiv.style.color = '#4ade80';
-    }
-    
-    // Update output when jsonInput changes
     jsonInput.addEventListener('input', function() {
-        const jsonText = jsonInput.value.trim();
-        if (jsonText) {
+        let text = jsonInput.value.trim();
+        if (text) {
             try {
-                // Try to format it nicely
-                const parsed = JSON.parse(jsonText);
+                const parsed = JSON.parse(text);
                 const formatted = JSON.stringify(parsed, null, 2);
                 outputPre.innerText = formatted;
-                statusDiv.innerHTML = '✅ Valid JSON! Click "Copy JSON to Clipboard" for your bot.';
+                statusDiv.innerHTML = '✅ Valid JSON! Ready to copy.';
                 statusDiv.style.color = '#4ade80';
             } catch(e) {
-                // Not valid JSON, show as is
-                outputPre.innerText = jsonText;
+                outputPre.innerText = text;
                 statusDiv.innerHTML = '⚠️ Not valid JSON, but will copy as is.';
                 statusDiv.style.color = '#f87171';
             }
         } else {
-            outputPre.innerText = '{}';
-            statusDiv.innerHTML = 'Paste JSON from Claude above...';
-            statusDiv.style.color = '#71717a';
+            outputPre.innerText = 'Waiting for JSON...';
+            statusDiv.innerHTML = '';
         }
     });
     
     copyBtn.onclick = async () => {
         const text = outputPre.innerText;
-        if (text && text !== '{}' && !text.includes('"status": "waiting"')) {
+        if (text && text !== 'Waiting for JSON...') {
             await navigator.clipboard.writeText(text);
             copyBtn.innerHTML = '✅ Copied!';
-            setTimeout(() => copyBtn.innerHTML = '📋 Copy JSON to Clipboard', 2000);
             statusDiv.innerHTML = '✅ JSON copied! Paste into your bot agent.';
             statusDiv.style.color = '#4ade80';
+            setTimeout(() => copyBtn.innerHTML = '📋 Copy JSON to Clipboard', 2000);
         } else {
-            statusDiv.innerHTML = '❌ Nothing to copy. First paste JSON from Claude above.';
+            statusDiv.innerHTML = '❌ Paste some JSON first.';
             statusDiv.style.color = '#f87171';
         }
     };
-    
-    // Pre-fill with example instructions
-    statusDiv.innerHTML = 'Ask Claude for a company JSON, then paste it above.';
 </script>
 </body>
 </html>
