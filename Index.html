@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Info Extractor · For Your Bot</title>
+    <title>Company Research Scraper · For Your Bot Agent</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -12,7 +12,7 @@
             font-family: system-ui, -apple-system, sans-serif;
             padding: 1rem;
         }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 900px; margin: 0 auto; }
         .card {
             background: #111114;
             border: 1px solid #27272a;
@@ -20,7 +20,22 @@
             padding: 1.5rem;
             margin-bottom: 1rem;
         }
-        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        h1 { 
+            font-size: 1.75rem; 
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, #fff, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .sub { color: #a1a1aa; margin-bottom: 1.5rem; font-size: 0.875rem; }
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #a1a1aa;
+        }
         input, textarea {
             width: 100%;
             background: #1f1f24;
@@ -28,7 +43,12 @@
             border-radius: 0.5rem;
             padding: 0.75rem;
             color: white;
+            font-size: 0.875rem;
             margin-bottom: 1rem;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #8b5cf6;
         }
         button {
             background: #8b5cf6;
@@ -39,16 +59,28 @@
             font-weight: bold;
             cursor: pointer;
             width: 100%;
+            font-size: 1rem;
         }
         button:hover { background: #7c3aed; }
+        button.secondary {
+            background: #3f3f46;
+            width: auto;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+        button.secondary:hover { background: #52525b; }
         pre {
             background: #0c0c0e;
             border: 1px solid #27272a;
             border-radius: 0.5rem;
             padding: 1rem;
             overflow-x: auto;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            max-height: 450px;
+            overflow-y: auto;
         }
         .status {
             padding: 0.75rem;
@@ -59,49 +91,81 @@
         .success { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; color: #4ade80; }
         .info { background: rgba(139,92,246,0.1); border: 1px solid #8b5cf6; }
         .small { font-size: 0.7rem; color: #71717a; margin-top: 0.5rem; }
+        .flex { display: flex; gap: 0.5rem; justify-content: flex-end; margin-bottom: 0.5rem; }
+        .example-badge {
+            background: #1f1f24;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            color: #a78bfa;
+            cursor: pointer;
+            display: inline-block;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .example-badge:hover { background: #2f2f34; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="card">
-        <h1>🔍 Business Info Extractor</h1>
-        <p style="color: #a1a1aa; margin-bottom: 1rem;">Get contact info, pricing, services - works for ANY business</p>
+        <h1>🔍 Company Research Scraper</h1>
+        <div class="sub">Extract business data · Get JSON for your bot agent</div>
         
         <label>🔑 Anthropic API Key</label>
         <input type="password" id="apiKey" placeholder="sk-ant-api-...">
         
-        <label>🏢 Business Name & Details</label>
-        <textarea id="businessQuery" rows="3" placeholder="Example: Monkey Adventures Tanzania, safari tour company in Arusha. I need their email, phone, pricing, and services."></textarea>
+        <label>🏢 Company Name</label>
+        <textarea id="companyName" rows="2" placeholder="Example: Monkey Adventures Tanzania"></textarea>
         
-        <button id="searchBtn">🔍 Extract Business Info</button>
+        <div style="margin-bottom: 1rem;">
+            <span style="font-size: 0.7rem; color: #71717a;">Quick examples:</span>
+            <span class="example-badge" onclick="setExample('Monkey Adventures Tanzania, safari company in Arusha')">🐒 Monkey Adventures</span>
+            <span class="example-badge" onclick="setExample('Stripe, payment processing company')">💳 Stripe</span>
+            <span class="example-badge" onclick="setExample('Tesla, electric car company')">🚗 Tesla</span>
+            <span class="example-badge" onclick="setExample('Airbnb, vacation rental platform')">🏠 Airbnb</span>
+        </div>
         
-        <div id="status" class="status info">Ready. Enter business name and click Extract.</div>
+        <button id="researchBtn">🔍 Scrape Company Data</button>
         
-        <div class="small">💡 Your API key stays in your browser. Results appear below - copy for your bot.</div>
+        <div id="status" class="status info">Ready. Enter company name and click Scrape.</div>
+        
+        <div class="small">🔐 Your API key stays in your browser. Results are JSON ready for your bot.</div>
     </div>
     
     <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <span>📄 Results (Copy this for your bot)</span>
-            <button id="copyBtn" style="width: auto; padding: 0.25rem 0.75rem; background: #3f3f46;">Copy</button>
+        <div class="flex">
+            <button id="copyBtn" class="secondary">📋 Copy JSON</button>
+            <button id="clearBtn" class="secondary">🗑️ Clear</button>
         </div>
-        <pre id="output">Results will appear here...</pre>
+        <pre id="output">{
+  "status": "waiting",
+  "message": "Enter a company name above and click 'Scrape Company Data'"
+}</pre>
     </div>
 </div>
 
 <script>
     const apiKeyInput = document.getElementById('apiKey');
-    const businessQuery = document.getElementById('businessQuery');
-    const searchBtn = document.getElementById('searchBtn');
+    const companyNameInput = document.getElementById('companyName');
+    const researchBtn = document.getElementById('researchBtn');
     const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
     const statusDiv = document.getElementById('status');
     const outputPre = document.getElementById('output');
     
-    // Load saved key
-    const savedKey = localStorage.getItem('anthropic_key');
+    // Set example function
+    window.setExample = function(name) {
+        companyNameInput.value = name;
+        statusDiv.innerHTML = `✅ Example loaded. Click "Scrape Company Data" to research ${name.substring(0, 50)}...`;
+        statusDiv.className = 'status success';
+    };
+    
+    // Load saved API key
+    const savedKey = localStorage.getItem('scraper_api_key');
     if (savedKey) {
         apiKeyInput.value = savedKey;
-        statusDiv.innerHTML = '✅ API key loaded. Ready to search.';
+        statusDiv.innerHTML = '✅ API key loaded. Ready to scrape companies.';
         statusDiv.className = 'status success';
     }
     
@@ -109,60 +173,88 @@
     apiKeyInput.addEventListener('change', () => {
         const key = apiKeyInput.value.trim();
         if (key && key.startsWith('sk-ant-')) {
-            localStorage.setItem('anthropic_key', key);
+            localStorage.setItem('scraper_api_key', key);
             statusDiv.innerHTML = '✅ API key saved.';
             statusDiv.className = 'status success';
         }
     });
     
-    // Default example
-    businessQuery.value = `Monkey Adventures Tanzania - safari tour company in Arusha, Tanzania.
-
-Please extract:
-1. Business name
-2. Website URL
-3. Email address(es)
-4. Phone number(s)
-5. Physical address
-6. Services offered (list)
-7. Pricing (safari costs, Kilimanjaro trekking prices)
-8. Business hours
-9. Years in business
-10. Social media links
-
-Return as JSON only.`;
-    
-    copyBtn.onclick = () => {
-        const text = outputPre.innerText;
-        navigator.clipboard.writeText(text);
-        copyBtn.innerText = '✅ Copied!';
-        setTimeout(() => copyBtn.innerText = 'Copy', 2000);
+    // Clear button
+    clearBtn.onclick = () => {
+        outputPre.innerText = '{}';
+        statusDiv.innerHTML = 'Cleared. Enter a new company name.';
+        statusDiv.className = 'status info';
     };
     
-    searchBtn.onclick = async () => {
+    // Copy button
+    copyBtn.onclick = async () => {
+        const text = outputPre.innerText;
+        if (text && text !== '{}' && !text.includes('"status": "waiting"')) {
+            await navigator.clipboard.writeText(text);
+            copyBtn.innerHTML = '✅ Copied!';
+            setTimeout(() => copyBtn.innerHTML = '📋 Copy JSON', 2000);
+            statusDiv.innerHTML = '✅ JSON copied! Paste into your bot agent.';
+            statusDiv.className = 'status success';
+        } else {
+            statusDiv.innerHTML = '❌ Nothing to copy. Scrape a company first.';
+            statusDiv.className = 'status error';
+        }
+    };
+    
+    // Research button
+    researchBtn.onclick = async () => {
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) {
-            statusDiv.innerHTML = '❌ Please paste your Anthropic API key first.';
+            statusDiv.innerHTML = '❌ Paste your Anthropic API key first.';
             statusDiv.className = 'status error';
             return;
         }
         
         if (!apiKey.startsWith('sk-ant-')) {
-            statusDiv.innerHTML = '❌ Invalid API key format. Must start with sk-ant-';
+            statusDiv.innerHTML = '❌ Invalid API key. Must start with sk-ant-';
             statusDiv.className = 'status error';
             return;
         }
         
-        const query = businessQuery.value.trim();
-        if (!query) {
-            statusDiv.innerHTML = '❌ Enter business name and what info you need.';
+        const companyName = companyNameInput.value.trim();
+        if (!companyName) {
+            statusDiv.innerHTML = '❌ Enter a company name to scrape.';
             statusDiv.className = 'status error';
             return;
         }
         
-        statusDiv.innerHTML = '⏳ Contacting Claude AI... This takes 20-30 seconds.';
+        statusDiv.innerHTML = '⏳ Scraping company data... 20-30 seconds.';
         statusDiv.className = 'status info';
-        outputPre.innerText = 'Searching for business information...';
+        outputPre.innerText = '{"status": "searching", "message": "Researching ' + companyName + '..."}';
+        
+        const researchPrompt = `Research the company "${companyName}" thoroughly.
+
+Return ONLY valid JSON with this exact structure:
+
+{
+  "business_name": "",
+  "website": "",
+  "industry": "",
+  "description": "",
+  "contact": {
+    "email": "",
+    "phone": "",
+    "address": ""
+  },
+  "hours": "",
+  "services": [],
+  "pricing": {
+    "cheapest_plan": "",
+    "free_trial": false,
+    "enterprise": false
+  },
+  "faqs": [],
+  "guarantees": [],
+  "target_customers": [],
+  "years_in_business": ""
+}
+
+Use null for missing info. Do not invent data. Return ONLY JSON.`;
         
         try {
             const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -175,45 +267,32 @@ Return as JSON only.`;
                 body: JSON.stringify({
                     model: 'claude-3-sonnet-20241022',
                     max_tokens: 4000,
-                    system: 'You are a business research assistant. Find accurate, real business information from your knowledge. Return ONLY valid JSON. Do not make up information - use "Not found" for missing fields.',
-                    messages: [{
-                        role: 'user',
-                        content: `Research this business and return ONLY JSON:\n\n${query}\n\nReturn valid JSON only, no other text.`
-                    }]
+                    system: 'You extract business data. Return ONLY valid JSON.',
+                    messages: [{ role: 'user', content: researchPrompt }]
                 })
             });
             
-            if (!response.ok) {
-                const error = await response.text();
-                throw new Error(`API Error: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
             
             const data = await response.json();
             let result = data.content[0].text;
             
-            // Extract JSON if wrapped in markdown
             const jsonMatch = result.match(/```json\s*([\s\S]*?)\s*```/);
-            if (jsonMatch) {
-                result = jsonMatch[1];
-            }
+            if (jsonMatch) result = jsonMatch[1];
             
-            // Try to parse and prettify
             try {
                 const parsed = JSON.parse(result);
                 result = JSON.stringify(parsed, null, 2);
-            } catch(e) {
-                // Keep as is if not valid JSON
-            }
+            } catch(e) {}
             
             outputPre.innerText = result;
-            statusDiv.innerHTML = '✅ Extraction complete! Copy the JSON above for your bot.';
+            statusDiv.innerHTML = `✅ Scraped "${companyName}"! Click Copy JSON for your bot.`;
             statusDiv.className = 'status success';
             
         } catch (error) {
-            console.error('Error:', error);
-            statusDiv.innerHTML = `❌ Error: ${error.message}. Make sure you have internet and your API key is correct.`;
+            statusDiv.innerHTML = `❌ Error: ${error.message}`;
             statusDiv.className = 'status error';
-            outputPre.innerText = `Error: ${error.message}\n\nCheck your API key and try again.`;
+            outputPre.innerText = `{"error": "${error.message}"}`;
         }
     };
 </script>
