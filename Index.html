@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AI Web Scraper · Bot Agent Ready</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0f;
+            color: #e4e4e7;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.5;
+            padding: 1rem;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #fff, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .card {
+            background: #111114;
+            border: 1px solid #27272a;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #27272a;
+            background: #0c0c0e;
+            font-weight: 600;
+        }
+        .card-body { padding: 1.25rem; }
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #a1a1aa;
+        }
+        input, textarea {
+            width: 100%;
+            background: #1f1f24;
+            border: 1px solid #3f3f46;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            color: #fff;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+        button {
+            background: #27272a;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            color: #e4e4e7;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        button.primary {
+            background: #8b5cf6;
+            color: white;
+        }
+        button.primary:hover { background: #7c3aed; }
+        button:hover { background: #3f3f46; }
+        pre {
+            background: #0c0c0e;
+            border: 1px solid #27272a;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-size: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .status.error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; }
+        .status.success { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80; }
+        .status.info { background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); }
+        .small-text { font-size: 0.7rem; color: #71717a; margin-top: 0.5rem; }
+        .flex-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🔍 AI Web Scraper</h1>
+        <p style="color: #a1a1aa;">Extract business data for your bot agent</p>
+    </div>
+
+    <div class="grid-2">
+        <div>
+            <!-- API Key Card -->
+            <div class="card">
+                <div class="card-header">🔑 API Key</div>
+                <div class="card-body">
+                    <input type="password" id="apiKey" placeholder="Paste your sk-ant-api-... key here">
+                    <div class="flex-buttons">
+                        <button id="saveKeyBtn">💾 Save Key</button>
+                        <button id="validateKeyBtn">✅ Validate</button>
+                        <button id="clearKeyBtn">🗑️ Clear</button>
+                    </div>
+                    <div id="apiStatus" class="status info">⚠️ Paste your Anthropic API key above</div>
+                    <div class="small-text">🔐 Your key stays in your browser. Get it from console.anthropic.com</div>
+                </div>
+            </div>
+
+            <!-- Scraper Card -->
+            <div class="card">
+                <div class="card-header">🌐 Website to Scan</div>
+                <div class="card-body">
+                    <input type="text" id="urlInput" placeholder="https://example.com" value="https://">
+                    
+                    <label>Extraction Instructions</label>
+                    <textarea id="instructions" rows="8"></textarea>
+                    
+                    <div style="margin: 1rem 0;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 1.5rem;">
+                            <input type="radio" name="outputFormat" value="json" checked> JSON (for bots)
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="outputFormat" value="markdown"> Markdown
+                        </label>
+                    </div>
+                    
+                    <button id="scrapeBtn" class="primary" style="width: 100%; padding: 0.8rem;">🚀 Start Scraping</button>
+                    <div id="progressStatus" class="small-text" style="margin-top: 1rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    📄 Output (Copy for your bot)
+                    <button id="copyBtn" style="float: right; padding: 0.25rem 0.75rem;">Copy</button>
+                </div>
+                <div class="card-body">
+                    <pre id="output"><code>Ready.
+
+1. Paste your API key
+2. Enter a URL
+3. Click Start Scraping</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // DOM elements
+    const apiKeyInput = document.getElementById('apiKey');
+    const saveKeyBtn = document.getElementById('saveKeyBtn');
+    const validateKeyBtn = document.getElementById('validateKeyBtn');
+    const clearKeyBtn = document.getElementById('clearKeyBtn');
+    const apiStatus = document.getElementById('apiStatus');
+    const scrapeBtn = document.getElementById('scrapeBtn');
+    const urlInput = document.getElementById('urlInput');
+    const instructionsTextarea = document.getElementById('instructions');
+    const outputPre = document.getElementById('output');
+    const outputCode = outputPre.querySelector('code');
+    const copyBtn = document.getElementById('copyBtn');
+    const progressStatus = document.getElementById('progressStatus');
+
+    let currentApiKey = '';
+
+    // Load saved key
+    const saved = localStorage.getItem('claude_api_key');
+    if (saved) {
+        currentApiKey = saved;
+        apiKeyInput.value = saved;
+        updateStatus('success', '✅ API key loaded! Ready to scrape.');
+    }
+
+    // Default instructions (extracts everything for your bot)
+    instructionsTextarea.value = `Extract from this website for my AI bot agent:
+
+1. Business name
+2. What they do (industry and main service)
+3. Services offered (as a list)
+4. Pricing: cheapest plan, free trial, enterprise option
+5. Response time or delivery timeline
+6. FAQs (questions and answers)
+7. Guarantees (money-back, warranty, satisfaction)
+8. Target customer (industries, company sizes)
+9. Contact info: emails, phone numbers, address, hours
+
+Return ONLY valid JSON.`;
+
+    function updateStatus(type, msg) {
+        apiStatus.className = `status ${type}`;
+        apiStatus.innerHTML = msg;
+    }
+
+    function updateProgress(msg) {
+        progressStatus.innerHTML = msg;
+    }
+
+    saveKeyBtn.onclick = () => {
+        const key = apiKeyInput.value.trim();
+        if (!key) { updateStatus('error', '❌ Paste your API key'); return; }
+        if (!key.startsWith('sk-ant-')) { updateStatus('error', '❌ Key must start with sk-ant-'); return; }
+        currentApiKey = key;
+        localStorage.setItem('claude_api_key', key);
+        updateStatus('success', '✅ API key saved!');
+    };
+
+    clearKeyBtn.onclick = () => {
+        currentApiKey = '';
+        apiKeyInput.value = '';
+        localStorage.removeItem('claude_api_key');
+        updateStatus('info', '🔓 API key cleared');
+    };
+
+    validateKeyBtn.onclick = async () => {
+        const key = currentApiKey || apiKeyInput.value.trim();
+        if (!key) { updateStatus('error', '❌ Paste your API key first'); return; }
+        updateProgress('Validating...');
+        try {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+                body: JSON.stringify({ model: 'claude-3-haiku-20240307', max_tokens: 5, messages: [{ role: 'user', content: 'OK' }] })
+            });
+            if (res.ok) {
+                updateStatus('success', '✅ Valid API key!');
+                if (!currentApiKey) currentApiKey = key;
+            } else {
+                updateStatus('error', '❌ Invalid API key');
+            }
+        } catch (err) {
+            updateStatus('error', `❌ Network error: ${err.message}`);
+        }
+        updateProgress('');
+    };
+
+    copyBtn.onclick = () => {
+        navigator.clipboard.writeText(outputCode.innerText);
+        copyBtn.innerText = '✅ Copied!';
+        setTimeout(() => copyBtn.innerText = 'Copy', 2000);
+    };
+
+    scrapeBtn.onclick = async () => {
+        let key = currentApiKey || apiKeyInput.value.trim();
+        if (!key) { updateStatus('error', '❌ Paste your API key first'); return; }
+        
+        let url = urlInput.value.trim();
+        if (!url) { alert('Enter a URL'); return; }
+        if (!url.startsWith('http')) url = 'https://' + url;
+        
+        const outputFormat = document.querySelector('input[name="outputFormat"]:checked').value;
+        let instructions = instructionsTextarea.value.trim();
+        
+        updateProgress('🌐 Fetching website content...');
+        updateStatus('info', '⏳ Working...');
+        
+        try {
+            // Using a different CORS proxy that works better
+            const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
+            
+            const fetchRes = await fetch(proxyUrl, {
+                headers: { 'Origin': window.location.origin }
+            });
+            
+            if (!fetchRes.ok) throw new Error(`HTTP ${fetchRes.status}`);
+            let html = await fetchRes.text();
+            if (html.length > 80000) html = html.substring(0, 80000);
+            
+            updateProgress('🤖 Claude AI is analyzing (15-30 seconds)...');
+            
+            const prompt = `URL: ${url}\n\nWebsite content:\n${html}\n\n---\n\n${instructions}\n\nReturn valid ${outputFormat.toUpperCase()} only. No extra text.`;
+            
+            const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'claude-3-sonnet-20241022',
+                    max_tokens: 4096,
+                    system: 'Extract data from website content. Return ONLY requested data in specified format.',
+                    messages: [{ role: 'user', content: prompt }]
+                })
+            });
+            
+            if (!apiRes.ok) throw new Error(`API error ${apiRes.status}`);
+            
+            const data = await apiRes.json();
+            let result = data.content[0].text;
+            
+            // Clean up JSON if needed
+            if (outputFormat === 'json') {
+                const match = result.match(/```json\s*([\s\S]*?)\s*```/);
+                if (match) result = match[1];
+                try {
+                    const parsed = JSON.parse(result);
+                    result = JSON.stringify(parsed, null, 2);
+                } catch(e) {}
+            }
+            
+            outputCode.innerText = result;
+            updateStatus('success', '✅ Done! Copy the JSON for your bot.');
+            updateProgress('');
+            
+        } catch (err) {
+            updateProgress('');
+            updateStatus('error', `❌ Error: ${err.message}`);
+            outputCode.innerText = `Error: ${err.message}\n\nTry a different website or check your internet.`;
+        }
+    };
+</script>
+</body>
+</html>
