@@ -86,6 +86,7 @@
         .error { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: #f87171; }
         .success { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; color: #4ade80; }
         .info { background: rgba(139,92,246,0.1); border: 1px solid #8b5cf6; }
+        .warning { background: rgba(234,179,8,0.1); border: 1px solid #eab308; color: #fde047; }
         .small { font-size: 0.7rem; color: #71717a; margin-top: 0.5rem; }
     </style>
 </head>
@@ -93,21 +94,30 @@
 <div class="container">
     <div class="card">
         <h1>🔒 Anti-Bot Web Scraper</h1>
-        <div class="small" style="margin-bottom: 1rem;">Uses Scrape.do to bypass Cloudflare · Extracts data with Claude</div>
+        <div class="small" style="margin-bottom: 1rem;">Uses Scrape.do to bypass Cloudflare · Auto-retry on 502 errors</div>
         
         <label>🔑 Scrape.do API Token</label>
         <input type="password" id="scrapeToken" placeholder="Get token from dashboard.scrape.do">
         
-        <label>🔑 Anthropic API Key</label>
-        <input type="password" id="claudeToken" placeholder="sk-ant-api-...">
+        <label>🔑 Anthropic API Key (Optional)</label>
+        <input type="password" id="claudeToken" placeholder="sk-ant-api-... (optional)">
         
         <label>🌐 Target URL</label>
         <input type="text" id="targetUrl" placeholder="https://www.monkey-adventure.com/" value="https://www.monkey-adventure.com/">
         
+        <div style="margin-bottom: 1rem;">
+            <label style="display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 1rem;">
+                <input type="radio" name="renderMode" value="true" checked> Render JS (render=true)
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                <input type="radio" name="renderMode" value="false"> Basic (render=false)
+            </label>
+        </div>
+        
         <label>📋 Extraction Instructions</label>
         <textarea id="instructions" rows="4">Extract: business name, email, phone, address, hours, services, pricing, FAQs, guarantees. Return as JSON.</textarea>
         
-        <button id="scrapeBtn">🚀 Bypass & Extract</button>
+        <button id="scrapeBtn">🚀 Bypass & Extract (Auto-Retry)</button>
         
         <div id="status" class="status info">Ready. Enter Scrape.do token and URL.</div>
     </div>
@@ -134,6 +144,7 @@
     const clearBtn = document.getElementById('clearBtn');
     const statusDiv = document.getElementById('status');
     const outputPre = document.getElementById('output');
+    const renderRadios = document.querySelectorAll('input[name="renderMode"]');
     
     // Load saved tokens
     const savedScrapeToken = localStorage.getItem('scrape_do_token');
@@ -170,11 +181,46 @@
         statusDiv.className = 'status info';
     };
     
+    async function scrapeWithRetry(token, url, render, maxRetries = 3) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            statusDiv.innerHTML = `🌐 Attempt ${attempt}/${maxRetries}: Bypassing Cloudflare via Scrape.do...`;
+            
+            const encodedUrl = encodeURIComponent(url);
+            const apiUrl = `http://api.scrape.do/?token=${token}&url=${encodedUrl}&render=${render}`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                
+                if (response.status === 502) {
+                    statusDiv.innerHTML = `⚠️ Attempt ${attempt}: Got 502 error. Retrying in 2 seconds... (Credit not charged)`;
+                    statusDiv.className = 'status warning';
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    continue;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Scrape.do API error: ${response.status}`);
+                }
+                
+                const html = await response.text();
+                return { success: true, html: html.substring(0, 60000), attempt };
+                
+            } catch (error) {
+                if (attempt === maxRetries) {
+                    return { success: false, error: error.message };
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+        return { success: false, error: 'Max retries exceeded' };
+    }
+    
     scrapeBtn.onclick = async () => {
         const scrapeApiToken = scrapeToken.value.trim();
         const anthropicApiKey = claudeToken.value.trim();
         const url = targetUrl.value.trim();
         const extractInstructions = instructions.value.trim();
+        const renderMode = document.querySelector('input[name="renderMode"]:checked').value;
         
         if (!scrapeApiToken) {
             statusDiv.innerHTML = '❌ Enter your Scrape.do API token first. Get it from dashboard.scrape.do';
@@ -188,69 +234,64 @@
             return;
         }
         
-        statusDiv.innerHTML = '🌐 Step 1: Bypassing Cloudflare via Scrape.do...';
-        statusDiv.className = 'status info';
         outputPre.innerText = '{"status": "bypassing", "message": "Fetching website through Scrape.do..."}';
         
-        try {
-            // Step 1: Use Scrape.do to get HTML content
-            const encodedUrl = encodeURIComponent(url);
-            const scrapeApiUrl = `https://api.scrape.do/?token=${scrapeApiToken}&url=${encodedUrl}&render=true`;
-            
-            const scrapeResponse = await fetch(scrapeApiUrl);
-            if (!scrapeResponse.ok) throw new Error(`Scrape.do API error: ${scrapeResponse.status}`);
-            
-            let html = await scrapeResponse.text();
-            if (html.length > 60000) html = html.substring(0, 60000);
-            
-            statusDiv.innerHTML = '🤖 Step 2: Extracting data with Claude...';
-            outputPre.innerText = '{"status": "extracting", "message": "Claude is analyzing the content..."}';
-            
-            // Step 2: Send to Claude for extraction (if API key provided)
-            if (anthropicApiKey && anthropicApiKey.startsWith('sk-ant-')) {
-                const claudePrompt = `You are a business data extractor. Extract from this HTML content:\n\n${html}\n\n${extractInstructions}\n\nReturn ONLY valid JSON, no other text.`;
-                
-                const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-                    method: 'POST',
-                    headers: {
-                        'x-api-key': anthropicApiKey,
-                        'anthropic-version': '2023-06-01',
-                        'content-type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'claude-3-sonnet-20241022',
-                        max_tokens: 4000,
-                        system: 'Extract business data. Return ONLY valid JSON.',
-                        messages: [{ role: 'user', content: claudePrompt }]
-                    })
-                });
-                
-                if (claudeResponse.ok) {
-                    const claudeData = await claudeResponse.json();
-                    let result = claudeData.content[0].text;
-                    const jsonMatch = result.match(/```json\s*([\s\S]*?)\s*```/);
-                    if (jsonMatch) result = jsonMatch[1];
-                    try { result = JSON.stringify(JSON.parse(result), null, 2); } catch(e) {}
-                    outputPre.innerText = result;
-                    statusDiv.innerHTML = '✅ Extraction complete! Copy JSON for your bot.';
-                    statusDiv.className = 'status success';
-                } else {
-                    // Show raw HTML if Claude fails
-                    outputPre.innerText = html.substring(0, 3000);
-                    statusDiv.innerHTML = '⚠️ Claude extraction failed. Showing raw HTML (first 3000 chars).';
-                    statusDiv.className = 'status error';
-                }
-            } else {
-                // No Claude API key - show raw HTML
-                outputPre.innerText = html.substring(0, 3000);
-                statusDiv.innerHTML = '⚠️ No Anthropic API key. Showing raw HTML (first 3000 chars). Add a key for structured data.';
-                statusDiv.className = 'status info';
-            }
-            
-        } catch (error) {
-            statusDiv.innerHTML = `❌ Error: ${error.message}`;
+        const result = await scrapeWithRetry(scrapeApiToken, url, renderMode, 3);
+        
+        if (!result.success) {
+            statusDiv.innerHTML = `❌ Failed after 3 attempts: ${result.error}. Try different render mode or check URL.`;
             statusDiv.className = 'status error';
-            outputPre.innerText = `{"error": "${error.message}"}`;
+            outputPre.innerText = `{"error": "${result.error}"}`;
+            return;
+        }
+        
+        statusDiv.innerHTML = `✅ Got HTML on attempt ${result.attempt}! Now processing...`;
+        
+        // Show raw HTML preview
+        if (!anthropicApiKey || !anthropicApiKey.startsWith('sk-ant-')) {
+            outputPre.innerText = result.html.substring(0, 3000);
+            statusDiv.innerHTML = `✅ HTML fetched (${result.html.length} chars). Add Anthropic API key for structured JSON.`;
+            statusDiv.className = 'status success';
+            return;
+        }
+        
+        // Send to Claude
+        statusDiv.innerHTML = '🤖 Extracting data with Claude...';
+        
+        try {
+            const claudePrompt = `Extract from this HTML:\n\n${result.html}\n\n${extractInstructions}\n\nReturn ONLY valid JSON.`;
+            
+            const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'x-api-key': anthropicApiKey,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'claude-3-sonnet-20241022',
+                    max_tokens: 4000,
+                    system: 'Extract business data. Return ONLY valid JSON.',
+                    messages: [{ role: 'user', content: claudePrompt }]
+                })
+            });
+            
+            if (claudeResponse.ok) {
+                const claudeData = await claudeResponse.json();
+                let resultText = claudeData.content[0].text;
+                const jsonMatch = resultText.match(/```json\s*([\s\S]*?)\s*```/);
+                if (jsonMatch) resultText = jsonMatch[1];
+                try { resultText = JSON.stringify(JSON.parse(resultText), null, 2); } catch(e) {}
+                outputPre.innerText = resultText;
+                statusDiv.innerHTML = '✅ Extraction complete! Copy JSON for your bot.';
+                statusDiv.className = 'status success';
+            } else {
+                throw new Error('Claude API error');
+            }
+        } catch (error) {
+            outputPre.innerText = result.html.substring(0, 3000);
+            statusDiv.innerHTML = `⚠️ Claude failed. Showing raw HTML (${result.html.length} chars).`;
+            statusDiv.className = 'status warning';
         }
     };
 </script>
