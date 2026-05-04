@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AI Web Scraper · Bot Agent Ready</title>
+    <title>AI Web Scraper · Search Mode Edition</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -81,7 +81,7 @@
             padding: 1rem;
             overflow-x: auto;
             font-size: 0.75rem;
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
         }
         .status {
@@ -94,6 +94,17 @@
         .status.info { background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); }
         .small-text { font-size: 0.7rem; color: #71717a; margin-top: 0.5rem; }
         .flex-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .mode-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .mode-btn {
+            flex: 1;
+            text-align: center;
+            background: #1f1f24;
+        }
+        .mode-btn.active { background: #8b5cf6; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
     </style>
@@ -102,7 +113,7 @@
 <div class="container">
     <div class="header">
         <h1>🔍 AI Web Scraper</h1>
-        <p style="color: #a1a1aa;">Extract business data for your bot agent</p>
+        <p style="color: #a1a1aa;">Search for any business - no blocking! Works like I did for Monkey Adventures</p>
     </div>
 
     <div class="grid-2">
@@ -122,15 +133,30 @@
                 </div>
             </div>
 
-            <!-- Scraper Card -->
+            <!-- Search Card - THIS IS THE KEY PART -->
             <div class="card">
-                <div class="card-header">🌐 Website to Scan</div>
+                <div class="card-header">🔍 Search for Any Business</div>
                 <div class="card-body">
-                    <input type="text" id="urlInput" placeholder="https://example.com" value="https://">
-                    
-                    <label>Extraction Instructions</label>
-                    <textarea id="instructions" rows="8"></textarea>
-                    
+                    <div class="mode-selector" id="modeSelector">
+                        <button class="mode-btn active" data-mode="search">🔍 Search Mode (Recommended)</button>
+                        <button class="mode-btn" data-mode="url">🌐 URL Mode (May be blocked)</button>
+                    </div>
+
+                    <div id="searchMode">
+                        <label>What business do you want to research?</label>
+                        <input type="text" id="searchQuery" placeholder="Example: Monkey Adventures Tanzania contact email phone services pricing">
+                        <div class="small-text">💡 Be specific: include business name, location, and what info you want</div>
+                    </div>
+
+                    <div id="urlMode" style="display: none;">
+                        <label>Target URL</label>
+                        <input type="text" id="urlInput" placeholder="https://example.com">
+                        <div class="small-text">⚠️ Many websites block scrapers. Use Search Mode instead!</div>
+                    </div>
+
+                    <label style="margin-top: 1rem;">What information do you want to extract?</label>
+                    <textarea id="instructions" rows="6"></textarea>
+
                     <div style="margin: 1rem 0;">
                         <label style="display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 1.5rem;">
                             <input type="radio" name="outputFormat" value="json" checked> JSON (for bots)
@@ -140,7 +166,7 @@
                         </label>
                     </div>
                     
-                    <button id="scrapeBtn" class="primary" style="width: 100%; padding: 0.8rem;">🚀 Start Scraping</button>
+                    <button id="scrapeBtn" class="primary" style="width: 100%; padding: 0.8rem;">🚀 Search & Extract</button>
                     <div id="progressStatus" class="small-text" style="margin-top: 1rem;"></div>
                 </div>
             </div>
@@ -156,8 +182,10 @@
                     <pre id="output"><code>Ready.
 
 1. Paste your API key
-2. Enter a URL
-3. Click Start Scraping</code></pre>
+2. Type a business name + location + what info you want
+3. Click "Search & Extract"
+
+Example: "Monkey Adventures Tanzania website email phone pricing safari costs"</code></pre>
                 </div>
             </div>
         </div>
@@ -173,11 +201,33 @@
     const apiStatus = document.getElementById('apiStatus');
     const scrapeBtn = document.getElementById('scrapeBtn');
     const urlInput = document.getElementById('urlInput');
+    const searchQueryInput = document.getElementById('searchQuery');
     const instructionsTextarea = document.getElementById('instructions');
     const outputPre = document.getElementById('output');
     const outputCode = outputPre.querySelector('code');
     const copyBtn = document.getElementById('copyBtn');
     const progressStatus = document.getElementById('progressStatus');
+    
+    // Mode switching
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const searchModeDiv = document.getElementById('searchMode');
+    const urlModeDiv = document.getElementById('urlMode');
+    let currentMode = 'search';
+
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modeBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMode = btn.dataset.mode;
+            if (currentMode === 'search') {
+                searchModeDiv.style.display = 'block';
+                urlModeDiv.style.display = 'none';
+            } else {
+                searchModeDiv.style.display = 'none';
+                urlModeDiv.style.display = 'block';
+            }
+        });
+    });
 
     let currentApiKey = '';
 
@@ -186,23 +236,29 @@
     if (saved) {
         currentApiKey = saved;
         apiKeyInput.value = saved;
-        updateStatus('success', '✅ API key loaded! Ready to scrape.');
+        updateStatus('success', '✅ API key loaded! Ready to search.');
     }
 
-    // Default instructions (extracts everything for your bot)
-    instructionsTextarea.value = `Extract from this website for my AI bot agent:
+    // Default instructions - works for ANY business
+    instructionsTextarea.value = `Extract the following business information from search results and your knowledge:
 
 1. Business name
-2. What they do (industry and main service)
-3. Services offered (as a list)
-4. Pricing: cheapest plan, free trial, enterprise option
-5. Response time or delivery timeline
-6. FAQs (questions and answers)
-7. Guarantees (money-back, warranty, satisfaction)
-8. Target customer (industries, company sizes)
-9. Contact info: emails, phone numbers, address, hours
+2. Website URL
+3. What they do (industry and main services)
+4. Contact email(s)
+5. Phone number(s)
+6. Physical address
+7. Business hours
+8. Services offered (as a list)
+9. Pricing (cheapest plan, free trial, price ranges)
+10. Response time or delivery timeline
+11. FAQs
+12. Guarantees (money-back, warranty)
+13. Target customer (industries, company sizes)
+14. Years in business
+15. Social media links
 
-Return ONLY valid JSON.`;
+Return as valid JSON only. If information is not found in search results, use your knowledge or mark as "Not found".`;
 
     function updateStatus(type, msg) {
         apiStatus.className = `status ${type}`;
@@ -261,44 +317,53 @@ Return ONLY valid JSON.`;
         let key = currentApiKey || apiKeyInput.value.trim();
         if (!key) { updateStatus('error', '❌ Paste your API key first'); return; }
         
-        let url = urlInput.value.trim();
-        if (!url) { alert('Enter a URL'); return; }
-        if (!url.startsWith('http')) url = 'https://' + url;
-        
         const outputFormat = document.querySelector('input[name="outputFormat"]:checked').value;
         let instructions = instructionsTextarea.value.trim();
         
-        updateProgress('🌐 Fetching website content...');
+        let userPrompt = '';
+        
+        if (currentMode === 'search') {
+            let searchQuery = searchQueryInput.value.trim();
+            if (!searchQuery) { alert('Enter what business you want to research'); return; }
+            userPrompt = `Research this business: "${searchQuery}"
+
+Search the web and use your knowledge to find:
+
+${instructions}
+
+Return valid ${outputFormat.toUpperCase()} only. Be thorough - find website, contact info, services, pricing, etc.`;
+        } else {
+            let url = urlInput.value.trim();
+            if (!url) { alert('Enter a URL'); return; }
+            if (!url.startsWith('http')) url = 'https://' + url;
+            userPrompt = `Website URL: ${url}
+
+Scrape this website and extract:
+
+${instructions}
+
+Return valid ${outputFormat.toUpperCase()} only.`;
+        }
+        
+        updateProgress('🤖 Claude AI is searching and analyzing (20-40 seconds)...');
         updateStatus('info', '⏳ Working...');
         
         try {
-            // Using a different CORS proxy that works better
-            const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
-            
-            const fetchRes = await fetch(proxyUrl, {
-                headers: { 'Origin': window.location.origin }
-            });
-            
-            if (!fetchRes.ok) throw new Error(`HTTP ${fetchRes.status}`);
-            let html = await fetchRes.text();
-            if (html.length > 80000) html = html.substring(0, 80000);
-            
-            updateProgress('🤖 Claude AI is analyzing (15-30 seconds)...');
-            
-            const prompt = `URL: ${url}\n\nWebsite content:\n${html}\n\n---\n\n${instructions}\n\nReturn valid ${outputFormat.toUpperCase()} only. No extra text.`;
-            
             const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
                 body: JSON.stringify({
                     model: 'claude-3-sonnet-20241022',
                     max_tokens: 4096,
-                    system: 'Extract data from website content. Return ONLY requested data in specified format.',
-                    messages: [{ role: 'user', content: prompt }]
+                    system: 'You are a business research assistant. Search the web and use your knowledge to find accurate business information. Return ONLY the requested data. Do not make up information - mark missing fields as "Not found".',
+                    messages: [{ role: 'user', content: userPrompt }]
                 })
             });
             
-            if (!apiRes.ok) throw new Error(`API error ${apiRes.status}`);
+            if (!apiRes.ok) {
+                const errorText = await apiRes.text();
+                throw new Error(`API error ${apiRes.status}: ${errorText}`);
+            }
             
             const data = await apiRes.json();
             let result = data.content[0].text;
@@ -314,13 +379,13 @@ Return ONLY valid JSON.`;
             }
             
             outputCode.innerText = result;
-            updateStatus('success', '✅ Done! Copy the JSON for your bot.');
+            updateStatus('success', '✅ Search complete! Copy this JSON for your bot.');
             updateProgress('');
             
         } catch (err) {
             updateProgress('');
             updateStatus('error', `❌ Error: ${err.message}`);
-            outputCode.innerText = `Error: ${err.message}\n\nTry a different website or check your internet.`;
+            outputCode.innerText = `Error: ${err.message}\n\nTry again or rephrase your search.`;
         }
     };
 </script>
