@@ -2,390 +2,218 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AI Web Scraper · Search Mode Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Info Extractor · For Your Bot</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0a0a0f;
             color: #e4e4e7;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            line-height: 1.5;
+            font-family: system-ui, -apple-system, sans-serif;
             padding: 1rem;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 2rem; }
-        .header h1 {
-            font-size: 1.8rem;
-            background: linear-gradient(135deg, #fff, #a78bfa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
+        .container { max-width: 800px; margin: 0 auto; }
         .card {
             background: #111114;
             border: 1px solid #27272a;
             border-radius: 1rem;
-            margin-bottom: 1.5rem;
-            overflow: hidden;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
         }
-        .card-header {
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid #27272a;
-            background: #0c0c0e;
-            font-weight: 600;
-        }
-        .card-body { padding: 1.25rem; }
-        label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: #a1a1aa;
-        }
+        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
         input, textarea {
             width: 100%;
             background: #1f1f24;
             border: 1px solid #3f3f46;
             border-radius: 0.5rem;
             padding: 0.75rem;
-            color: #fff;
-            font-size: 0.875rem;
+            color: white;
             margin-bottom: 1rem;
         }
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #8b5cf6;
-        }
         button {
-            background: #27272a;
+            background: #8b5cf6;
             border: none;
             border-radius: 0.5rem;
-            padding: 0.6rem 1.2rem;
-            color: #e4e4e7;
-            font-weight: 500;
-            cursor: pointer;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        button.primary {
-            background: #8b5cf6;
+            padding: 0.75rem 1.5rem;
             color: white;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
         }
-        button.primary:hover { background: #7c3aed; }
-        button:hover { background: #3f3f46; }
+        button:hover { background: #7c3aed; }
         pre {
             background: #0c0c0e;
             border: 1px solid #27272a;
-            border-radius: 0.75rem;
+            border-radius: 0.5rem;
             padding: 1rem;
             overflow-x: auto;
             font-size: 0.75rem;
-            max-height: 500px;
-            overflow-y: auto;
+            white-space: pre-wrap;
         }
         .status {
             padding: 0.75rem;
             border-radius: 0.5rem;
-            margin-top: 1rem;
+            margin: 1rem 0;
         }
-        .status.error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; }
-        .status.success { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80; }
-        .status.info { background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); }
-        .small-text { font-size: 0.7rem; color: #71717a; margin-top: 0.5rem; }
-        .flex-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
-        .mode-selector {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.25rem;
-        }
-        .mode-btn {
-            flex: 1;
-            text-align: center;
-            background: #1f1f24;
-        }
-        .mode-btn.active { background: #8b5cf6; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+        .error { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: #f87171; }
+        .success { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; color: #4ade80; }
+        .info { background: rgba(139,92,246,0.1); border: 1px solid #8b5cf6; }
+        .small { font-size: 0.7rem; color: #71717a; margin-top: 0.5rem; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="header">
-        <h1>🔍 AI Web Scraper</h1>
-        <p style="color: #a1a1aa;">Search for any business - no blocking! Works like I did for Monkey Adventures</p>
+    <div class="card">
+        <h1>🔍 Business Info Extractor</h1>
+        <p style="color: #a1a1aa; margin-bottom: 1rem;">Get contact info, pricing, services - works for ANY business</p>
+        
+        <label>🔑 Anthropic API Key</label>
+        <input type="password" id="apiKey" placeholder="sk-ant-api-...">
+        
+        <label>🏢 Business Name & Details</label>
+        <textarea id="businessQuery" rows="3" placeholder="Example: Monkey Adventures Tanzania, safari tour company in Arusha. I need their email, phone, pricing, and services."></textarea>
+        
+        <button id="searchBtn">🔍 Extract Business Info</button>
+        
+        <div id="status" class="status info">Ready. Enter business name and click Extract.</div>
+        
+        <div class="small">💡 Your API key stays in your browser. Results appear below - copy for your bot.</div>
     </div>
-
-    <div class="grid-2">
-        <div>
-            <!-- API Key Card -->
-            <div class="card">
-                <div class="card-header">🔑 API Key</div>
-                <div class="card-body">
-                    <input type="password" id="apiKey" placeholder="Paste your sk-ant-api-... key here">
-                    <div class="flex-buttons">
-                        <button id="saveKeyBtn">💾 Save Key</button>
-                        <button id="validateKeyBtn">✅ Validate</button>
-                        <button id="clearKeyBtn">🗑️ Clear</button>
-                    </div>
-                    <div id="apiStatus" class="status info">⚠️ Paste your Anthropic API key above</div>
-                    <div class="small-text">🔐 Your key stays in your browser. Get it from console.anthropic.com</div>
-                </div>
-            </div>
-
-            <!-- Search Card - THIS IS THE KEY PART -->
-            <div class="card">
-                <div class="card-header">🔍 Search for Any Business</div>
-                <div class="card-body">
-                    <div class="mode-selector" id="modeSelector">
-                        <button class="mode-btn active" data-mode="search">🔍 Search Mode (Recommended)</button>
-                        <button class="mode-btn" data-mode="url">🌐 URL Mode (May be blocked)</button>
-                    </div>
-
-                    <div id="searchMode">
-                        <label>What business do you want to research?</label>
-                        <input type="text" id="searchQuery" placeholder="Example: Monkey Adventures Tanzania contact email phone services pricing">
-                        <div class="small-text">💡 Be specific: include business name, location, and what info you want</div>
-                    </div>
-
-                    <div id="urlMode" style="display: none;">
-                        <label>Target URL</label>
-                        <input type="text" id="urlInput" placeholder="https://example.com">
-                        <div class="small-text">⚠️ Many websites block scrapers. Use Search Mode instead!</div>
-                    </div>
-
-                    <label style="margin-top: 1rem;">What information do you want to extract?</label>
-                    <textarea id="instructions" rows="6"></textarea>
-
-                    <div style="margin: 1rem 0;">
-                        <label style="display: inline-flex; align-items: center; gap: 0.5rem; margin-right: 1.5rem;">
-                            <input type="radio" name="outputFormat" value="json" checked> JSON (for bots)
-                        </label>
-                        <label style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                            <input type="radio" name="outputFormat" value="markdown"> Markdown
-                        </label>
-                    </div>
-                    
-                    <button id="scrapeBtn" class="primary" style="width: 100%; padding: 0.8rem;">🚀 Search & Extract</button>
-                    <div id="progressStatus" class="small-text" style="margin-top: 1rem;"></div>
-                </div>
-            </div>
+    
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <span>📄 Results (Copy this for your bot)</span>
+            <button id="copyBtn" style="width: auto; padding: 0.25rem 0.75rem; background: #3f3f46;">Copy</button>
         </div>
-
-        <div>
-            <div class="card">
-                <div class="card-header">
-                    📄 Output (Copy for your bot)
-                    <button id="copyBtn" style="float: right; padding: 0.25rem 0.75rem;">Copy</button>
-                </div>
-                <div class="card-body">
-                    <pre id="output"><code>Ready.
-
-1. Paste your API key
-2. Type a business name + location + what info you want
-3. Click "Search & Extract"
-
-Example: "Monkey Adventures Tanzania website email phone pricing safari costs"</code></pre>
-                </div>
-            </div>
-        </div>
+        <pre id="output">Results will appear here...</pre>
     </div>
 </div>
 
 <script>
-    // DOM elements
     const apiKeyInput = document.getElementById('apiKey');
-    const saveKeyBtn = document.getElementById('saveKeyBtn');
-    const validateKeyBtn = document.getElementById('validateKeyBtn');
-    const clearKeyBtn = document.getElementById('clearKeyBtn');
-    const apiStatus = document.getElementById('apiStatus');
-    const scrapeBtn = document.getElementById('scrapeBtn');
-    const urlInput = document.getElementById('urlInput');
-    const searchQueryInput = document.getElementById('searchQuery');
-    const instructionsTextarea = document.getElementById('instructions');
-    const outputPre = document.getElementById('output');
-    const outputCode = outputPre.querySelector('code');
+    const businessQuery = document.getElementById('businessQuery');
+    const searchBtn = document.getElementById('searchBtn');
     const copyBtn = document.getElementById('copyBtn');
-    const progressStatus = document.getElementById('progressStatus');
+    const statusDiv = document.getElementById('status');
+    const outputPre = document.getElementById('output');
     
-    // Mode switching
-    const modeBtns = document.querySelectorAll('.mode-btn');
-    const searchModeDiv = document.getElementById('searchMode');
-    const urlModeDiv = document.getElementById('urlMode');
-    let currentMode = 'search';
-
-    modeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            modeBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentMode = btn.dataset.mode;
-            if (currentMode === 'search') {
-                searchModeDiv.style.display = 'block';
-                urlModeDiv.style.display = 'none';
-            } else {
-                searchModeDiv.style.display = 'none';
-                urlModeDiv.style.display = 'block';
-            }
-        });
-    });
-
-    let currentApiKey = '';
-
     // Load saved key
-    const saved = localStorage.getItem('claude_api_key');
-    if (saved) {
-        currentApiKey = saved;
-        apiKeyInput.value = saved;
-        updateStatus('success', '✅ API key loaded! Ready to search.');
+    const savedKey = localStorage.getItem('anthropic_key');
+    if (savedKey) {
+        apiKeyInput.value = savedKey;
+        statusDiv.innerHTML = '✅ API key loaded. Ready to search.';
+        statusDiv.className = 'status success';
     }
+    
+    // Save key when typed
+    apiKeyInput.addEventListener('change', () => {
+        const key = apiKeyInput.value.trim();
+        if (key && key.startsWith('sk-ant-')) {
+            localStorage.setItem('anthropic_key', key);
+            statusDiv.innerHTML = '✅ API key saved.';
+            statusDiv.className = 'status success';
+        }
+    });
+    
+    // Default example
+    businessQuery.value = `Monkey Adventures Tanzania - safari tour company in Arusha, Tanzania.
 
-    // Default instructions - works for ANY business
-    instructionsTextarea.value = `Extract the following business information from search results and your knowledge:
-
+Please extract:
 1. Business name
 2. Website URL
-3. What they do (industry and main services)
-4. Contact email(s)
-5. Phone number(s)
-6. Physical address
-7. Business hours
-8. Services offered (as a list)
-9. Pricing (cheapest plan, free trial, price ranges)
-10. Response time or delivery timeline
-11. FAQs
-12. Guarantees (money-back, warranty)
-13. Target customer (industries, company sizes)
-14. Years in business
-15. Social media links
+3. Email address(es)
+4. Phone number(s)
+5. Physical address
+6. Services offered (list)
+7. Pricing (safari costs, Kilimanjaro trekking prices)
+8. Business hours
+9. Years in business
+10. Social media links
 
-Return as valid JSON only. If information is not found in search results, use your knowledge or mark as "Not found".`;
-
-    function updateStatus(type, msg) {
-        apiStatus.className = `status ${type}`;
-        apiStatus.innerHTML = msg;
-    }
-
-    function updateProgress(msg) {
-        progressStatus.innerHTML = msg;
-    }
-
-    saveKeyBtn.onclick = () => {
-        const key = apiKeyInput.value.trim();
-        if (!key) { updateStatus('error', '❌ Paste your API key'); return; }
-        if (!key.startsWith('sk-ant-')) { updateStatus('error', '❌ Key must start with sk-ant-'); return; }
-        currentApiKey = key;
-        localStorage.setItem('claude_api_key', key);
-        updateStatus('success', '✅ API key saved!');
-    };
-
-    clearKeyBtn.onclick = () => {
-        currentApiKey = '';
-        apiKeyInput.value = '';
-        localStorage.removeItem('claude_api_key');
-        updateStatus('info', '🔓 API key cleared');
-    };
-
-    validateKeyBtn.onclick = async () => {
-        const key = currentApiKey || apiKeyInput.value.trim();
-        if (!key) { updateStatus('error', '❌ Paste your API key first'); return; }
-        updateProgress('Validating...');
-        try {
-            const res = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-                body: JSON.stringify({ model: 'claude-3-haiku-20240307', max_tokens: 5, messages: [{ role: 'user', content: 'OK' }] })
-            });
-            if (res.ok) {
-                updateStatus('success', '✅ Valid API key!');
-                if (!currentApiKey) currentApiKey = key;
-            } else {
-                updateStatus('error', '❌ Invalid API key');
-            }
-        } catch (err) {
-            updateStatus('error', `❌ Network error: ${err.message}`);
-        }
-        updateProgress('');
-    };
-
+Return as JSON only.`;
+    
     copyBtn.onclick = () => {
-        navigator.clipboard.writeText(outputCode.innerText);
+        const text = outputPre.innerText;
+        navigator.clipboard.writeText(text);
         copyBtn.innerText = '✅ Copied!';
         setTimeout(() => copyBtn.innerText = 'Copy', 2000);
     };
-
-    scrapeBtn.onclick = async () => {
-        let key = currentApiKey || apiKeyInput.value.trim();
-        if (!key) { updateStatus('error', '❌ Paste your API key first'); return; }
-        
-        const outputFormat = document.querySelector('input[name="outputFormat"]:checked').value;
-        let instructions = instructionsTextarea.value.trim();
-        
-        let userPrompt = '';
-        
-        if (currentMode === 'search') {
-            let searchQuery = searchQueryInput.value.trim();
-            if (!searchQuery) { alert('Enter what business you want to research'); return; }
-            userPrompt = `Research this business: "${searchQuery}"
-
-Search the web and use your knowledge to find:
-
-${instructions}
-
-Return valid ${outputFormat.toUpperCase()} only. Be thorough - find website, contact info, services, pricing, etc.`;
-        } else {
-            let url = urlInput.value.trim();
-            if (!url) { alert('Enter a URL'); return; }
-            if (!url.startsWith('http')) url = 'https://' + url;
-            userPrompt = `Website URL: ${url}
-
-Scrape this website and extract:
-
-${instructions}
-
-Return valid ${outputFormat.toUpperCase()} only.`;
+    
+    searchBtn.onclick = async () => {
+        const apiKey = apiKeyInput.value.trim();
+        if (!apiKey) {
+            statusDiv.innerHTML = '❌ Please paste your Anthropic API key first.';
+            statusDiv.className = 'status error';
+            return;
         }
         
-        updateProgress('🤖 Claude AI is searching and analyzing (20-40 seconds)...');
-        updateStatus('info', '⏳ Working...');
+        if (!apiKey.startsWith('sk-ant-')) {
+            statusDiv.innerHTML = '❌ Invalid API key format. Must start with sk-ant-';
+            statusDiv.className = 'status error';
+            return;
+        }
+        
+        const query = businessQuery.value.trim();
+        if (!query) {
+            statusDiv.innerHTML = '❌ Enter business name and what info you need.';
+            statusDiv.className = 'status error';
+            return;
+        }
+        
+        statusDiv.innerHTML = '⏳ Contacting Claude AI... This takes 20-30 seconds.';
+        statusDiv.className = 'status info';
+        outputPre.innerText = 'Searching for business information...';
         
         try {
-            const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
-                headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+                headers: {
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json'
+                },
                 body: JSON.stringify({
                     model: 'claude-3-sonnet-20241022',
-                    max_tokens: 4096,
-                    system: 'You are a business research assistant. Search the web and use your knowledge to find accurate business information. Return ONLY the requested data. Do not make up information - mark missing fields as "Not found".',
-                    messages: [{ role: 'user', content: userPrompt }]
+                    max_tokens: 4000,
+                    system: 'You are a business research assistant. Find accurate, real business information from your knowledge. Return ONLY valid JSON. Do not make up information - use "Not found" for missing fields.',
+                    messages: [{
+                        role: 'user',
+                        content: `Research this business and return ONLY JSON:\n\n${query}\n\nReturn valid JSON only, no other text.`
+                    }]
                 })
             });
             
-            if (!apiRes.ok) {
-                const errorText = await apiRes.text();
-                throw new Error(`API error ${apiRes.status}: ${errorText}`);
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`API Error: ${response.status}`);
             }
             
-            const data = await apiRes.json();
+            const data = await response.json();
             let result = data.content[0].text;
             
-            // Clean up JSON if needed
-            if (outputFormat === 'json') {
-                const match = result.match(/```json\s*([\s\S]*?)\s*```/);
-                if (match) result = match[1];
-                try {
-                    const parsed = JSON.parse(result);
-                    result = JSON.stringify(parsed, null, 2);
-                } catch(e) {}
+            // Extract JSON if wrapped in markdown
+            const jsonMatch = result.match(/```json\s*([\s\S]*?)\s*```/);
+            if (jsonMatch) {
+                result = jsonMatch[1];
             }
             
-            outputCode.innerText = result;
-            updateStatus('success', '✅ Search complete! Copy this JSON for your bot.');
-            updateProgress('');
+            // Try to parse and prettify
+            try {
+                const parsed = JSON.parse(result);
+                result = JSON.stringify(parsed, null, 2);
+            } catch(e) {
+                // Keep as is if not valid JSON
+            }
             
-        } catch (err) {
-            updateProgress('');
-            updateStatus('error', `❌ Error: ${err.message}`);
-            outputCode.innerText = `Error: ${err.message}\n\nTry again or rephrase your search.`;
+            outputPre.innerText = result;
+            statusDiv.innerHTML = '✅ Extraction complete! Copy the JSON above for your bot.';
+            statusDiv.className = 'status success';
+            
+        } catch (error) {
+            console.error('Error:', error);
+            statusDiv.innerHTML = `❌ Error: ${error.message}. Make sure you have internet and your API key is correct.`;
+            statusDiv.className = 'status error';
+            outputPre.innerText = `Error: ${error.message}\n\nCheck your API key and try again.`;
         }
     };
 </script>
